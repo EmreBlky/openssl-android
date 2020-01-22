@@ -1,0 +1,52 @@
+#!/usr/bin/make -f
+
+# This has to be exported to make some magic below work.
+export DH_OPTIONS
+
+ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+	NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+else
+	NUMJOBS = 1
+endif
+
+TARGETS := arm-linux-androideabi aarch64-linux-android
+DESTDIR=$(CURDIR)/debian/openssl-android
+
+export ANDROID_NDK_HOME=/opt/android/ndk
+export PATH := $(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/linux-x86_64/bin/:$(PATH)
+
+%:
+	dh $@ --parallel
+
+override_dh_auto_clean:
+	for target in $(TARGETS); do \
+		rm -rf build-$$target; \
+	done
+	dh_auto_clean
+
+override_dh_auto_configure:
+	for target in $(TARGETS); do \
+		OPENSSL_ARCH=$$(cat debian/arch/$$target); \
+		echo $(OPENSSL_ARCH); \
+		mkdir build-$$target; \
+		cd build-$$target; \
+		../openssl/Configure --cross-compile-prefix=$$target --prefix=/usr/$$target --openssldir=/usr/$$target $$OPENSSL_ARCH no-asm no-unit-test -mthumb -fPIC -latomic -D__ANDROID_API__=21; \
+		cd ..; \
+	done
+
+override_dh_auto_build:
+	for target in $(TARGETS); do \
+		cd build-$$target; \
+		$(MAKE) SHLIB_VERSION_NUMBER= SHLIB_EXT=.so -j$(NUMJOBS); \
+		cd ..; \
+	done
+
+override_dh_auto_install:
+	for target in $(TARGETS); do \
+		cd build-$$target; \
+		$(MAKE) SHLIB_VERSION_NUMBER= SHLIB_EXT=.so DESTDIR=$(DESTDIR) install; \
+		rm $(DESTDIR)/usr/$$target/lib/*.a; \
+		cd ..; \
+	done
+
+override_dh_auto_test:

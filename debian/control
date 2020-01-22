@@ -1,0 +1,11 @@
+Source: openssl-android
+Section: devel
+Priority: optional
+Maintainer: Tobias Junghans <tobydox@veyon.io>
+Build-Depends: debhelper (>= 9)
+Standards-Version: 3.9.7
+
+Package: openssl-android
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: OpenSSL library - Android runtime and headers

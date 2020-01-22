@@ -1,0 +1,5 @@
+openssl-android (1.1.1d-1) stable; urgency=medium
+
+  * Initial Release.
+
+ -- Tobias Junghans <tobydox@veyon.io>  Wed, 22 Jan 2020 15:09:42 +0100
